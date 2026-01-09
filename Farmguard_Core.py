@@ -13,7 +13,7 @@ from threading import Thread
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
 # Roboflow Config
-ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY"))
+ROBOFLOW_API_KEY = os.getenv("ROBOFLOW_API_KEY")
 ROBOFLOW_MODEL = "classify-and-conditionally-detect-single-label-classification-ztjv0"
 ROBOFLOW_VERSION = "1"
 ROBOFLOW_URL = f"https://detect.roboflow.com/{ROBOFLOW_MODEL}/{ROBOFLOW_VERSION}?api_key={ROBOFLOW_API_KEY}"
@@ -251,3 +251,4 @@ def process_in_background(image_path, timestamp, image_name, cam_name):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
+
