@@ -11,20 +11,20 @@ The system is designed for precision agriculture use-cases, with a focus on modu
 
 🔧 System Architecture (High Level)
 
-ESP32-CAM
+> ESP32-CAM
 Captures images on button press and sends them to the backend over HTTPS.
 
-Flask Backend
+> Flask Backend
 Receives images, performs:
 
-Leaf detection
+> Leaf detection
 
-Disease classification
+> Disease classification
 
-Logging and visualization
+> Logging and visualization
 
-Roboflow Models
+> Roboflow Models
 Used for leaf detection and disease classification.
 
-Telegram Bot (Optional)
+> Telegram Bot (Optional)
 Sends alerts when a disease is detected.
