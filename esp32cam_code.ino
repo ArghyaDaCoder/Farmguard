@@ -143,40 +143,55 @@ void setup() {
   Serial.printf("📦 Free heap after init: %u bytes\n", ESP.getFreeHeap());
 }
 
+// Add these two variables right above your loop() function
+unsigned long lastCaptureTime = 0;
+const unsigned long captureInterval = 1200000; // 20 minutes in milliseconds
+
 void loop() {
-    // Check if WiFi is still connected
+  // 1. Check if WiFi is still connected
   if (WiFi.status() != WL_CONNECTED) {
     digitalWrite(GREEN_LED, LOW); // Turn off green LED if WiFi disconnected
   } else {
     digitalWrite(GREEN_LED, HIGH); // Ensure green LED is ON if WiFi connected
   }
 
-  if (WiFi.status() == WL_CONNECTED && digitalRead(BUTTON_PIN) == LOW) {
-    delay(50); // debounce
-    if (digitalRead(BUTTON_PIN) == LOW) {
+  // 2. Check conditions: Was the button pressed? OR has 20 minutes passed?
+  bool buttonPressed = (digitalRead(BUTTON_PIN) == LOW);
+  bool timerTriggered = (millis() - lastCaptureTime >= captureInterval);
+
+  if (WiFi.status() == WL_CONNECTED && (buttonPressed || timerTriggered)) {
+    
+    if (buttonPressed) {
+      delay(50); // Debounce the button
       Serial.println("📸 Button pressed! Capturing...");
-
-      digitalWrite(BLUE_LED, HIGH); // ⭐️ NEW
-      digitalWrite(4, HIGH);        // Flash ON
-      
-      esp_camera_fb_return(esp_camera_fb_get());  // 🧼 Flush the old frame
-      delay(100);  // small delay to ensure next frame loads fresh
-      camera_fb_t *fb = esp_camera_fb_get();  // Now capture
-
-
-
-      if (!fb || !fb->buf) {
-        Serial.println("❌ Capture failed");
-      } else {
-        Serial.println("✅ Image captured! Sending...");
-        sendToFlaskServer(fb);
-        esp_camera_fb_return(fb);
-        Serial.printf("📦 Free heap after sending: %u bytes\n", ESP.getFreeHeap());
-      }
-
-      digitalWrite(BLUE_LED, LOW);  // ⭐️ NEW
-      digitalWrite(4, LOW);         // Flash OFF
-      delay(1000); // cooldown
+    } else {
+      Serial.println("⏱️ 20 minutes elapsed! Auto-capturing...");
     }
+
+    // --- CAPTURE SEQUENCE ---
+    digitalWrite(BLUE_LED, HIGH); // Turn on active LED
+    digitalWrite(4, HIGH);        // Flash ON
+    
+    esp_camera_fb_return(esp_camera_fb_get());  // 🧼 Flush the old frame
+    delay(100);  // Small delay to ensure next frame loads fresh
+    camera_fb_t *fb = esp_camera_fb_get();  // Now capture
+
+    if (!fb || !fb->buf) {
+      Serial.println("❌ Capture failed");
+    } else {
+      Serial.println("✅ Image captured! Sending...");
+      sendToFlaskServer(fb);
+      esp_camera_fb_return(fb);
+      Serial.printf("📦 Free heap after sending: %u bytes\n", ESP.getFreeHeap());
+    }
+
+    digitalWrite(BLUE_LED, LOW);  // Turn off active LED
+    digitalWrite(4, LOW);         // Flash OFF
+    
+    // 3. ⭐️ RESET THE TIMER ⭐️
+    // Whether triggered by button or timer, reset the stopwatch to 0
+    lastCaptureTime = millis(); 
+    
+    delay(1000); // 1 second cooldown
   }
 }
